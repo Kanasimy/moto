@@ -37,10 +37,31 @@ if (strlen(COption::GetOptionString('alexkova.market', 'list_marker_type')) > 0)
 
 $elementDraw->setMarkerCollection($bxreadyMarkers);
 ?>
+<?
+// additional video
+$arResult["VIDEO"] = array();
+if (isset($arResult["PROPERTIES"]["VIDEO"]["VALUE"]) && is_array($arResult["PROPERTIES"]["VIDEO"]["VALUE"])) {
+    foreach ($arResult["PROPERTIES"]["VIDEO"]["VALUE"] as $FILE) {
+        $FILE = CFile::GetFileArray($FILE);
+        if (is_array($FILE))
+            $arResult["VIDEO"][] = $FILE;
+    }
+}
+?>
 <div class="ax-element-slider">
     <?$elementDraw->showMarkerGroup($markerGroup);?>
     <div class="ax-element-slider-main">
         <?if (count($arResult["MORE_PHOTO"]) > 0) :
+            if (count($arResult["VIDEO"]) > 0) :
+            foreach ($arResult["VIDEO"] as $key => $val) :?>
+                <span class="movie-fluid" data-rel="gallery" data-fancybox-group="bx-gallery" <?if ($key == 0) echo 'id="main-photo"'?>
+                data-item="<?=$val["ID"]?>" data-main='default'>
+                <video width="100%" height="100%" controls poster="<?=$arResult["MORE_PHOTO"][$key]["SRC"]?>" preload="none">
+                    <source src="<?=$val["SRC"]?>" type="video/mp4">
+                </video>
+            </span>
+            <?endforeach;
+        endif;
             foreach ($arResult["MORE_PHOTO"] as $key => $val) :
                 $title = ($arResult["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_TITLE"]) ? $arResult["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"] : $arResult["NAME"];
                 $alt = ($arResult["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"]) ? $arResult["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"] : $arResult["NAME"];
@@ -51,13 +72,16 @@ $elementDraw->setMarkerCollection($bxreadyMarkers);
                     if ($value)
                         $dataAtr .= "data-".strtolower($keyval)."='".$value."' ";
                 }
+                if($key > count($arResult["VIDEO"] && count($arResult["VIDEO"]) > 0) || count($arResult["VIDEO"]) === 0) :
                 ?>
-                <a href="<?=$val["SRC"]?>" class="fancybox" data-rel="gallery" data-fancybox-group="bx-gallery" <?if ($key == 0) echo 'id="main-photo"'?>
+
+                <a href="<?=$val["SRC"]?>" class="fancybox" data-rel="gallery" data-fancybox-group="bx-gallery" <?if ($key == 0 && count($arResult["VIDEO"]) === 0) echo 'id="main-photo"'?>
                     data-item="<?=$val["ITEM_ID"]?>" <?=$dataAtr?> >
                     <img src="<?=$val["SRC"]?>" class="zoom-img" title="<?=$imgTitle?>" alt="<?=$imgAlt?>"
                          data-state="show" data-large="<?=$val["SRC"]?>" data-text-bottom="<?=$imgTitle?>" itemprop="image">
                 </a>
-            <?endforeach;
+            <?endif;
+            endforeach;
             if ($useBrands && $arResult["PROPERTIES"][$arParams["BRAND_PROP_CODE"][0]]["VALUE"]) :
 				echo '<div class="brand-detail">';
                 $APPLICATION->IncludeComponent("bitrix:catalog.brandblock", "element_detail", array(
@@ -85,22 +109,21 @@ $elementDraw->setMarkerCollection($bxreadyMarkers);
             </div>
         <?endif;?>
     </div>
-            <?
-            // additional video
-            $arResult["VIDEO"] = array();
-            if (isset($arResult["PROPERTIES"]["VIDEO"]["VALUE"]) && is_array($arResult["PROPERTIES"]["VIDEO"]["VALUE"])) {
-                foreach ($arResult["PROPERTIES"]["VIDEO"]["VALUE"] as $FILE) {
-                    $FILE = CFile::GetFileArray($FILE);
-                    if (is_array($FILE))
-                        $arResult["VIDEO"][] = $FILE;
-                }
-            }
-            ?>
-            <? print_r($arResult["VIDEO"]) ?>
-
     <?if (count($arResult["MORE_PHOTO"]) > 1) :?>
-
         <div class="ax-element-slider-nav hidden-xs">
+            <?if (count($arResult["VIDEO"]) > 0) :?>
+                <!--вывод превью для видео -->
+                <?foreach ($arResult["VIDEO"] as $key => $val):?>
+                    <div class="slick-nav" data-item="<?=$arResult["MORE_PHOTO"][$key]["ITEM_ID"]?>" data-main='default'>
+                        <div class="slide-wrap movie-nav <?if ($key == 0) echo 'first-slide'?>" data-item="<?=$arResult["MORE_PHOTO"][$key]["ITEM_ID"]?>" <?if ($key == 0) echo 'id="main-photo-small"'?>>
+                           <?if (is_array($arResult["MORE_PHOTO"][$key])) :?>
+                                <img src="<?=$arResult["MORE_PHOTO"][$key]["SRC"]?>"  itemprop="image">
+                            <?endif;?>
+                        </div>
+                    </div>
+                <?endforeach;?>
+                <!--конец превью для видео -->
+            <?endif;?>
             <?foreach ($arResult["MORE_PHOTO"] as $key => $val):
                 $title = ($arResult["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_TITLE"]) ? $arResult["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_TITLE"] : $arResult["NAME"];
                 $alt = ($arResult["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"]) ? $arResult["IPROPERTY_VALUES"]["ELEMENT_PREVIEW_PICTURE_FILE_ALT"] : $arResult["NAME"];
@@ -111,12 +134,15 @@ $elementDraw->setMarkerCollection($bxreadyMarkers);
                     if ($value)
                         $dataAtr .= "data-".strtolower($keyval)."='".$value."' ";
                 }
+                //Пропускаем первые изображения, которые относятся к видео-превью
+                if($key > count($arResult["VIDEO"] && count($arResult["VIDEO"]) > 0) || count($arResult["VIDEO"]) === 0) :
             ?>
-            <div class="slick-nav" data-item="<?=$val["ITEM_ID"]?>" <?=$dataAtr?>>
-                <div class="slide-wrap <?if ($key == 0) echo 'first-slide'?>" data-item="<?=$val["ITEM_ID"]?>" <?if ($key == 0) echo 'id="main-photo-small"'?>>
-                    <img src="<?=$val["SRC"]?>" title="<?=$imgTitle?>" alt="<?=$imgAlt?>" itemprop="image">
-                </div>
-            </div>
+                    <div class="slick-nav" data-item="<?=$val["ITEM_ID"]?>" <?=$dataAtr?>>
+                        <div class="slide-wrap <?if ($key == 0) echo 'first-slide'?>" data-item="<?=$val["ITEM_ID"]?>" <?if ($key == 0) echo 'id="main-photo-small"'?>>
+                            <img src="<?=$val["SRC"]?>" title="<?=$imgTitle?>" alt="<?=$imgAlt?>" itemprop="image">
+                        </div>
+                    </div>
+                <?endif;?>
             <?endforeach;?>
         </div>
     <?endif;?>
@@ -136,7 +162,7 @@ $elementDraw->setMarkerCollection($bxreadyMarkers);
         infinite: true,
         cssEase: 'linear',
         asNavFor: '.ax-element-slider-nav',
-        slide: 'a'
+        slide: 'span, a'
     });
     var sliderNav = $('.ax-element-slider-nav').slick({
         slidesToShow: 3,
